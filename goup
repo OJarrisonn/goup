@@ -2,7 +2,7 @@
 
 # Default values
 CONFIG_FILE="$HOME/.config/goup.conf"
-RAW_FILES
+RAW_FILES="https://raw.githubusercontent.com/OJarrisonn/goup/master/"
 
 # Source config file if exists
 if [ -f "$CONFIG_FILE" ]; then
@@ -16,12 +16,10 @@ setup() {
     echo "Creating default config file at $CONFIG_FILE"
 
     # Create default config file
-    echo 'PLATFORM="linux"' > "$CONFIG_FILE"
-    echo 'ARCH="amd64"' > "$CONFIG_FILE"
-    echo 'GOUP_FOLDER="$HOME/.goup"' > "$CONFIG_FILE"
+    curl $RAW_FILES/goup.conf -o "$CONFIG_FILE"
 
     # Create goup folder
-    mkdir -p "$GOUP_FOLDER"
+    mkdir -p "$GOUP_FOLDER" 2> /dev/null
 }
 
 # Command: switch
@@ -35,9 +33,9 @@ switch() {
     if [ ! -d "$target_folder" ]; then
         # Download Go version
         echo "Downloading Go version ${version}..."
-        mkdir -p "$temp_folder"
+        mkdir -p "$temp_folder" 2> /dev/null
         if ! wget -q "$url" -O "${temp_folder}/go${version}.tar.gz"; then
-            echo "Error: Failed to download Go version ${version}."
+            echo "Error: Failed to download Go version ${version}, make sure the version exists and you have internet connection."
             return 1
         fi
 

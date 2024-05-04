@@ -1,0 +1,93 @@
+#!/bin/bash
+
+# Default values
+CONFIG_FILE="$HOME/.config/goup.conf"
+RAW_FILES
+
+# Source config file if exists
+if [ -f "$CONFIG_FILE" ]; then
+    source "$CONFIG_FILE"
+else 
+    setup
+fi
+
+# Command: setup
+setup() {
+    echo "Creating default config file at $CONFIG_FILE"
+
+    # Create default config file
+    echo 'PLATFORM="linux"' > "$CONFIG_FILE"
+    echo 'ARCH="amd64"' > "$CONFIG_FILE"
+    echo 'GOUP_FOLDER="$HOME/.goup"' > "$CONFIG_FILE"
+
+    # Create goup folder
+    mkdir -p "$GOUP_FOLDER"
+}
+
+# Command: switch
+switch() {
+    local version="$1"
+    local url="https://go.dev/dl/go${version}.${PLATFORM}-${ARCH}.tar.gz"
+    local temp_folder="/tmp/goup"
+    local target_folder="${GOUP_FOLDER}/${version}"
+
+    # Check if version folder exists
+    if [ ! -d "$target_folder" ]; then
+        # Download Go version
+        echo "Downloading Go version ${version}..."
+        mkdir -p "$temp_folder"
+        if ! wget -q "$url" -O "${temp_folder}/go${version}.tar.gz"; then
+            echo "Error: Failed to download Go version ${version}."
+            return 1
+        fi
+
+        # Extract Go version
+        tar -C "$GOUP_FOLDER" -xzf "${temp_folder}/go${version}.tar.gz"
+    fi
+
+    # Create symlink
+    ln -sf "${target_folder}/go" /usr/local/go
+    echo "Switched to Go version ${version}."
+}
+
+# Command: remove
+remove() {
+    local version="$1"
+    local target_folder="${GOUP_FOLDER}/${version}"
+
+    # Remove version folder
+    if [ -d "$target_folder" ]; then
+        rm -rf "$target_folder"
+        echo "Go version ${version} removed."
+    else
+        echo "Error: Go version ${version} not found."
+    fi
+}
+
+# Command: help
+help() {
+    echo "Usage: goup <command> [options]"
+    echo "Commands:"
+    echo "  help             Show this help message"
+    echo "  setup            Setup goup by creating config file and folder"
+    echo "  switch <version> Switch to the specified Go version"
+    echo "  remove <version> Remove the specified Go version"
+}
+
+# Main
+case "$1" in
+    "setup")
+        setup
+        ;;
+    "switch")
+        shift
+        switch "$1"
+        ;;
+    "remove")
+        shift
+        remove "$1"
+        ;;
+    "help" | *)
+        help
+        ;;
+esac
